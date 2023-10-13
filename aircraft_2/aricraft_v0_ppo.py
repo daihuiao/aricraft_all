@@ -7,10 +7,10 @@ import numpy as np
 import csv, os
 
 import torch
-import gym
-from gym.spaces import Discrete, Box
-# import gymnasium as gym
-# from gymnasium.spaces import Box
+# import gym
+# from gym.spaces import Discrete, Box
+import gymnasium as gym
+from gymnasium.spaces import Box
 import wandb
 # box = Box(0.0, 1.0, shape=(3, 4, 5))
 
@@ -531,8 +531,8 @@ class Env_aricraft(gym.Env):
         self.history_current = 0
         self.is_collision = False
         self.reach_goal = False
-        return state
-        # return state, {}
+        # return state
+        return state, {}
 
     def step(self, action):
         if self.static_obs == 2:
@@ -572,8 +572,8 @@ class Env_aricraft(gym.Env):
         # return state, reward, done, self.is_collision, self.reach_goal
         self.episode_step += 1
         self.total_step += 1
-        # return state, reward, done, False, {}
-        return state, reward, done, {}
+        return state, reward, done, False, {}
+        # return state, reward, done, {}
 
     def is_action_valid(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))

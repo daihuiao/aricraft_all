@@ -713,6 +713,7 @@ class Env_aricraft(gym.Env):
 
             print("self.collision_time:", self.collision_time)
             self.writer.add_scalar("to_be_ploted/collision_time", self.collision_time, self.episode)
+            self.writer.add_scalar("to_be_ploted/self.episode", self.episode, self.episode)
             self.writer.add_scalar("to_be_ploted/steps", self.episode_step, self.episode)
             self.writer.add_scalar("to_be_ploted/success", self.success, self.episode)
             self.writer.add_scalar("to_be_ploted/episode_trajuctory_length", self.episode_trajuctory_length,
