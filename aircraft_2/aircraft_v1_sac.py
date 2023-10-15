@@ -429,14 +429,14 @@ class Env_aricraft(gym.Env):
 
         self.current_point = copy.deepcopy(START_POINT)
         self.last_point = copy.deepcopy(START_POINT)
-        self.goal = copy.deepcopy(GOAL_POINT)
-        self.start = copy.deepcopy(START_POINT)
+        # self.goal = copy.deepcopy(GOAL_POINT)
+        # self.start = copy.deepcopy(START_POINT)
         self.load_current()  # todo
         self.current_fre = 10  # todo
         self.current_path = current_path
         self.current_ratio = CURRENT_RATIO  # todo
 
-        self.last_distance = np.sqrt(np.sum((self.current_point - GOAL_POINT) ** 2))
+        self.last_distance = np.sqrt(np.sum((self.current_point - self.GOAL_POINT) ** 2))
         ######OBS########
         # self.obs_num = config.obs_num  # todo
         self.static_obs = static_obs
@@ -531,7 +531,7 @@ class Env_aricraft(gym.Env):
         self.history_y = []
         self.history_z = []
         self.history_length = 0
-        self.last_distance = np.sqrt(np.sum((self.current_point - GOAL_POINT) ** 2))
+        self.last_distance = np.sqrt(np.sum((self.current_point - self.GOAL_POINT) ** 2))
         # self.last_current_reward = 0
         self.history_current = 0
         self.is_collision = False
@@ -646,7 +646,7 @@ class Env_aricraft(gym.Env):
             distance_forward = np.sqrt(np.sum((self.current_point - self.last_point) ** 2))
             self.episode_trajuctory_length += distance_forward
 
-            distance = np.sqrt(np.sum((self.current_point - GOAL_POINT) ** 2))
+            distance = np.sqrt(np.sum((self.current_point - self.GOAL_POINT) ** 2))
             distance_reward = distance - self.last_distance
             if distance < self.last_distance:
                 # distance_reward = 0.5
@@ -702,7 +702,7 @@ class Env_aricraft(gym.Env):
             is_collision = self.obs_n[i].is_collision(self.current_point)
             if is_collision:
                 self.is_collision = True
-        if np.sqrt(np.sum((self.current_point - GOAL_POINT) ** 2)) < 3:
+        if np.sqrt(np.sum((self.current_point - self.GOAL_POINT) ** 2)) < 3:
             self.reach_goal = True
             self.success = 1
         else:

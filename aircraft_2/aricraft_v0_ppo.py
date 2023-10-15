@@ -410,10 +410,11 @@ class Env_aricraft(gym.Env):
         os.makedirs(f"./{self.fig_dir}/{run_time}")
         self.writer = writer
         self.max_step = max_step
-        self.state_space = Box(low=-49.0, high=49.0, shape=(26,),seed=seed)
-        self.observation_space = Box(low=-50.0, high=50.0, shape=(26,),seed=seed)
+        # self.state_space = Box(low=-49.0, high=49.0, shape=(26+2,),seed=seed)
+        self.observation_space = Box(low=-50.0, high=50.0, shape=(26+2,),seed=seed)
         self.action_space = Box(np.array([0.0, 0.0]), np.array([np.pi, 2*np.pi]),seed=seed)
-
+        self.GOAL_POINT = GOAL_POINT
+        self.GOAL_POINT[1],self.GOAL_POINT[2]= 1+48*np.random.rand() , 1+48*np.random.rand()
         # 设定numpy随机数
         # np.random.seed(seed)  # 这样以来下面的地图就是固定的了吧
         # torch.manual_seed(seed)
@@ -428,14 +429,14 @@ class Env_aricraft(gym.Env):
 
         self.current_point = copy.deepcopy(START_POINT)
         self.last_point = copy.deepcopy(START_POINT)
-        self.goal = copy.deepcopy(GOAL_POINT)
-        self.start = copy.deepcopy(START_POINT)
+        # self.goal = copy.deepcopy(GOAL_POINT)
+        # self.start = copy.deepcopy(START_POINT)
         self.load_current()  # todo
         self.current_fre = 10  # todo
         self.current_path = current_path
         self.current_ratio = CURRENT_RATIO  # todo
 
-        self.last_distance = np.sqrt(np.sum((self.current_point - GOAL_POINT) ** 2))
+        self.last_distance = np.sqrt(np.sum((self.current_point - self.GOAL_POINT) ** 2))
         ######OBS########
         # self.obs_num = config.obs_num  # todo
         self.static_obs = static_obs
@@ -483,6 +484,10 @@ class Env_aricraft(gym.Env):
         #     with open(os.path.join(record_dir, 'obs_position.csv'), 'a') as f:
         #         writer = csv.writer(f)
         #         writer.writerow(obs)
+        self.GOAL_POINT[1],self.GOAL_POINT[2]= 1+48*np.random.rand() , 1+48*np.random.rand()
+        self.writer.add_scalar("info/self.GOAL_POINT[1]", self.GOAL_POINT[1], self.episode)
+        self.writer.add_scalar("info/self.GOAL_POINT[2]", self.GOAL_POINT[2], self.episode)
+
         Obs = [obs1, obs2, obs3, obs4, obs5, obs6, obs7, obs8, obs9, obs10, obs11, obs12, obs13, obs14, obs15, obs16]
         if self.static_obs == 0:
             obs = []
@@ -521,12 +526,12 @@ class Env_aricraft(gym.Env):
 
         four_cube = self.cube_generator.get_obs_of_aircraft(x=x, y=y)
         four_cube = four_cube / grid_x * 50
-        state = np.concatenate((self.current_point, mask, four_cube), axis=0)
+        state = np.concatenate((self.current_point, mask, four_cube,self.GOAL_POINT[1:3]), axis=0)
         self.history_x = []
         self.history_y = []
         self.history_z = []
         self.history_length = 0
-        self.last_distance = np.sqrt(np.sum((self.current_point - GOAL_POINT) ** 2))
+        self.last_distance = np.sqrt(np.sum((self.current_point - self.GOAL_POINT) ** 2))
         # self.last_current_reward = 0
         self.history_current = 0
         self.is_collision = False
@@ -556,7 +561,7 @@ class Env_aricraft(gym.Env):
         y = self.current_point[1] / 50 * grid_y
         four_cube = self.cube_generator.get_obs_of_aircraft(x=x, y=y)
         four_cube = four_cube / grid_x * 50
-        state = np.concatenate((self.current_point, current, four_cube), axis=0)  # todo right？
+        state = np.concatenate((self.current_point, current, four_cube,self.GOAL_POINT[1:3]), axis=0)  # todo right？
 
         # assert self.state_space.contains(state), "%r (%s) invalid" % (state, type(state))
 
@@ -641,7 +646,7 @@ class Env_aricraft(gym.Env):
             distance_forward = np.sqrt(np.sum((self.current_point - self.last_point) ** 2))
             self.episode_trajuctory_length += distance_forward
 
-            distance = np.sqrt(np.sum((self.current_point - GOAL_POINT) ** 2))
+            distance = np.sqrt(np.sum((self.current_point - self.GOAL_POINT) ** 2))
             distance_reward = distance - self.last_distance
             if distance < self.last_distance:
                 # distance_reward = 0.5
@@ -697,7 +702,7 @@ class Env_aricraft(gym.Env):
             is_collision = self.obs_n[i].is_collision(self.current_point)
             if is_collision:
                 self.is_collision = True
-        if np.sqrt(np.sum((self.current_point - GOAL_POINT) ** 2)) < 3:
+        if np.sqrt(np.sum((self.current_point - self.GOAL_POINT) ** 2)) < 3:
             self.reach_goal = True
             self.success = 1
         else:
