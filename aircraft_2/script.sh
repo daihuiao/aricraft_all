@@ -1,4 +1,4 @@
-projectname="aircraft_exp2"
+projectname="aircraft_exp2_"
 
 if [ $1 = "asac" ];then
   for seed in  21 22 23 24 25 26 27 28 29 30
