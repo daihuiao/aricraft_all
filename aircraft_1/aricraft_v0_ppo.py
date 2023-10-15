@@ -17,12 +17,12 @@ import wandb
 import scipy.io as sc
 from mpl_toolkits.mplot3d import Axes3D
 from datetime import datetime
-from gen_cube import  Cube_generator, One_cube
-
+from gen_cube import Cube_generator, One_cube
 
 # import matplotlib.pyplot as plt
 # plt.switch_backend('agg')
 from gen_cube import One_cube
+
 #######train路径图#######
 figure_dir = r'./figure'
 if not os.path.exists(figure_dir):
@@ -140,7 +140,6 @@ class Dynnmic_obs():
 #     plot_cuboid(center, (length, width, height))
 #
 # mPrint()
-
 
 
 # class One_cube():
@@ -402,7 +401,7 @@ with open(f"{grid_x}*{grid_y}_{number}.pkl", "rb") as fo:
 
 
 class Env_aricraft(gym.Env):
-    def __init__(self, writer, algorithm_name,seed, max_step=1000, static_obs=3):
+    def __init__(self, writer, algorithm_name, seed, max_step=1000, static_obs=3):
         # self.state_space = Box(low=-49.0, high=49.0, shape=(6,))
         # self.action_space = Discrete(6)
         self.algorithm_name = algorithm_name
@@ -410,9 +409,9 @@ class Env_aricraft(gym.Env):
         os.makedirs(f"./{self.fig_dir}/{run_time}")
         self.writer = writer
         self.max_step = max_step
-        self.state_space = Box(low=-49.0, high=49.0, shape=(26,),seed=seed)
-        self.observation_space = Box(low=-50.0, high=50.0, shape=(26,),seed=seed)
-        self.action_space = Box(np.array([0.0, 0.0]), np.array([np.pi, 2*np.pi]),seed=seed)
+        self.state_space = Box(low=-49.0, high=49.0, shape=(26,), seed=seed)
+        self.observation_space = Box(low=-50.0, high=50.0, shape=(26,), seed=seed)
+        self.action_space = Box(np.array([0.0, 0.0]), np.array([np.pi, 2 * np.pi]), seed=seed)
 
         # 设定numpy随机数
         # np.random.seed(seed)  # 这样以来下面的地图就是固定的了吧
@@ -531,6 +530,8 @@ class Env_aricraft(gym.Env):
         self.history_current = 0
         self.is_collision = False
         self.reach_goal = False
+
+        self.episodic_return = 0
         # return state
         return state, {}
 
@@ -579,7 +580,7 @@ class Env_aricraft(gym.Env):
         assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
         return action
 
-    def caculate_position(self, action,velocity):
+    def caculate_position(self, action, velocity):
         current = self.caculate_current()
         current_ratio = current / self.max_current * self.current_ratio
         position = np.zeros(3, )
@@ -662,6 +663,7 @@ class Env_aricraft(gym.Env):
                 cube_reward = 0.5
             # cube_reward=0
             reward = distance_reward + cube_reward - 1
+            self.episodic_return += reward
             self.writer.add_scalar('maybe_ploted/distance_reward', distance_reward, self.total_step)
             self.writer.add_scalar('maybe_ploted/cube_reward', cube_reward, self.total_step)
             self.writer.add_scalar('maybe_ploted/reward', reward, self.total_step)
@@ -710,10 +712,11 @@ class Env_aricraft(gym.Env):
             self.episode_rewards_1_s.append(self.episode_reward_1)
             self.visualization()
 
-
             print("self.collision_time:", self.collision_time)
-            self.writer.add_scalar("to_be_ploted/collision_time", self.collision_time, self.episode)
+            print("to_be_ploted/episodic_return_true:", self.episodic_return)
+            self.writer.add_scalar("to_be_ploted/episodic_return_true", self.episodic_return, self.episode)
             self.writer.add_scalar("to_be_ploted/self.episode", self.episode, self.episode)
+            self.writer.add_scalar("to_be_ploted/collision_time", self.collision_time, self.episode)
             self.writer.add_scalar("to_be_ploted/steps", self.episode_step, self.episode)
             self.writer.add_scalar("to_be_ploted/success", self.success, self.episode)
             self.writer.add_scalar("to_be_ploted/episode_trajuctory_length", self.episode_trajuctory_length,
@@ -723,12 +726,13 @@ class Env_aricraft(gym.Env):
             # wandb.log({"done/episode": self.episode_step})
             self.episode_step = 0
             self.episode += 1
+            self.episodic_return = 0
 
             self.episode_trajuctory_length = 0
             self.collision_time = 0
 
-            with open(f"trajectory_{self.algorithm_name}.pkl","a+b") as fo:
-                pickle.dump([self.history_x,self.history_y,self.history_z],fo)
+            with open(f"trajectory_{self.algorithm_name}.pkl", "a+b") as fo:
+                pickle.dump([self.history_x, self.history_y, self.history_z], fo)
 
             return True
         else:

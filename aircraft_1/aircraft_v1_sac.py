@@ -531,6 +531,8 @@ class Env_aricraft(gym.Env):
         self.history_current = 0
         self.is_collision = False
         self.reach_goal = False
+
+        self.episodic_return = 0
         return state
         # return state, {}
 
@@ -662,6 +664,7 @@ class Env_aricraft(gym.Env):
                 cube_reward = 0.5
             # cube_reward=0
             reward = distance_reward + cube_reward - 1
+            self.episodic_return += reward
             self.writer.add_scalar('maybe_ploted/distance_reward', distance_reward, self.total_step)
             self.writer.add_scalar('maybe_ploted/cube_reward', cube_reward, self.total_step)
             self.writer.add_scalar('maybe_ploted/reward', reward, self.total_step)
@@ -712,6 +715,8 @@ class Env_aricraft(gym.Env):
 
 
             print("self.collision_time:", self.collision_time)
+            print("to_be_ploted/episodic_return_true:", self.episodic_return)
+            self.writer.add_scalar("to_be_ploted/episodic_return_true", self.episodic_return, self.episode)
             self.writer.add_scalar("to_be_ploted/self.episode", self.episode, self.episode)
             self.writer.add_scalar("to_be_ploted/collision_time", self.collision_time, self.episode)
             self.writer.add_scalar("to_be_ploted/steps", self.episode_step, self.episode)
@@ -723,6 +728,7 @@ class Env_aricraft(gym.Env):
             # wandb.log({"done/episode": self.episode_step})
             self.episode_step = 0
             self.episode += 1
+            self.episodic_return = 0
 
             self.episode_trajuctory_length = 0
             self.collision_time = 0
