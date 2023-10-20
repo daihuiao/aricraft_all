@@ -414,16 +414,12 @@ class Env_aricraft(gym.Env):
         self.observation_space = Box(low=-50.0, high=50.0, shape=(26+2,),seed=seed)
         self.action_space = Box(np.array([0.0, 0.0]), np.array([np.pi, 2*np.pi]),seed=seed)
         self.GOAL_POINT = GOAL_POINT
-        self.GOAL_POINT[1],self.GOAL_POINT[2]= 1+48*np.random.rand() , 1+48*np.random.rand()
+        # self.GOAL_POINT[1],self.GOAL_POINT[2]= 1+48*np.random.rand() , 1+48*np.random.rand()
         # 设定numpy随机数
         # np.random.seed(seed)  # 这样以来下面的地图就是固定的了吧
         # torch.manual_seed(seed)
         cube_generator = Cube_generator(grid_x=grid_x, grid_y=grid_y)
-        cube_generator.cube = copy.deepcopy(hahas[0])
-        for y in range(grid_y):
-            for x in range(grid_x):
-                cube = cube_generator.cube[x][y]
-                plot_linear_cube(ax, cube.x, cube.y, cube.dx, cube.dy, cube.dz, color='red')
+
 
         self.cube_generator = copy.deepcopy(cube_generator)
 
@@ -484,9 +480,16 @@ class Env_aricraft(gym.Env):
         #     with open(os.path.join(record_dir, 'obs_position.csv'), 'a') as f:
         #         writer = csv.writer(f)
         #         writer.writerow(obs)
-        self.GOAL_POINT[1],self.GOAL_POINT[2]= 1+48*np.random.rand() , 1+48*np.random.rand()
+        # self.GOAL_POINT[1],self.GOAL_POINT[2]= 1+48*np.random.rand() , 1+48*np.random.rand()
         self.writer.add_scalar("info/self.GOAL_POINT[1]", self.GOAL_POINT[1], self.episode)
         self.writer.add_scalar("info/self.GOAL_POINT[2]", self.GOAL_POINT[2], self.episode)
+        cube_generator = Cube_generator(grid_x=grid_x, grid_y=grid_y)
+        cube_generator.cube = copy.deepcopy(hahas[self.episode])
+        for y in range(grid_y):
+            for x in range(grid_x):
+                cube = cube_generator.cube[x][y]
+                plot_linear_cube(ax, cube.x, cube.y, cube.dx, cube.dy, cube.dz, color='red')
+        self.cube_generator = copy.deepcopy(cube_generator)
 
         Obs = [obs1, obs2, obs3, obs4, obs5, obs6, obs7, obs8, obs9, obs10, obs11, obs12, obs13, obs14, obs15, obs16]
         if self.static_obs == 0:
@@ -781,7 +784,7 @@ class Env_aricraft(gym.Env):
         self.fig_num += 1
         plt.title(f"v1_{self.fig_dir}")
         # plt.show()
-        # plt.pause(0.001)
+        plt.pause(0.2)
         plt.cla()
 
     def load_current(self):
