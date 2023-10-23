@@ -321,7 +321,6 @@ if __name__ == "__main__":
                         alpha = log_alpha.exp().item()
                     elif args.exponent_decay:
                         alpha = 0.1 + (1 - 0.1) * (np.e ** (-global_step / 10000))
-
             # update the target networks
             if global_step % args.target_network_frequency == 0:
                 for param, target_param in zip(qf1.parameters(), qf1_target.parameters()):

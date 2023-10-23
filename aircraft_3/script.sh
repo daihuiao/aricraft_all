@@ -20,4 +20,9 @@ elif [ $1 = "td3" ]; then
   do
     python td3_continuous_action_dai.py --seed $seed  --total-episodes 1000 --wandb-project-name  $projectname
   done
+elif [ $1 = "sac_fixed" ]; then
+  for seed in  21 22 23 24 25 26 27 28 29 30
+  do
+    python sac_continuous_action_dai.py --seed $seed  --exponent_decay False --autotune False  --total-episodes 1000  --wandb-project-name  $projectname
+  done
 fi

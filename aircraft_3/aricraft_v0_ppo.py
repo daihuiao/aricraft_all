@@ -784,7 +784,7 @@ class Env_aricraft(gym.Env):
         self.fig_num += 1
         plt.title(f"v1_{self.fig_dir}")
         # plt.show()
-        plt.pause(0.2)
+        # plt.pause(0.2)
         plt.cla()
 
     def load_current(self):
