@@ -74,6 +74,8 @@ def parse_args():
                         help="the maximum norm for the gradient clipping")
     parser.add_argument("--target-kl", type=float, default=None,
                         help="the target KL divergence threshold")
+    parser.add_argument("--current_ratio", type=float, default=0.1,
+                        help="Entropy regularization coefficient.")
     args = parser.parse_args()
     args.batch_size = int(args.num_envs * args.num_steps)
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
@@ -81,12 +83,12 @@ def parse_args():
     return args
 
 
-def make_env(env_id, idx, capture_video, run_name, gamma, writer,seed):
+def make_env(env_id, idx, capture_video, run_name, gamma, writer,seed,current_ratio):
     def thunk():
         if capture_video:
             env = gym.make(env_id, render_mode="rgb_array")
         else:
-            env = Env_aricraft(writer,"ppo",seed=seed)
+            env = Env_aricraft(writer,"ppo",current_ratio=current_ratio,seed=seed)
             # env = gym.make(env_id)
         env = gym.wrappers.FlattenObservation(env)  # deal with dm_control's Dict observation space
         env = gym.wrappers.RecordEpisodeStatistics(env)
@@ -143,14 +145,14 @@ class Agent(nn.Module):
 
 if __name__ == "__main__":
     args = parse_args()
-    run_name = f"{args.exp_name}__{args.seed}__{int(time.time())}"
+    run_name = f"{args.exp_name}__{args.seed}__current_ratio{args.current_ratio}_{int(time.time())}"
     if args.track:
         import wandb
 
         wandb.init(
             project=args.wandb_project_name,
             entity=args.wandb_entity,
-            group=f"{args.exp_name}",
+            group=f"{args.exp_name}_current_ratio{args.current_ratio}",
             sync_tensorboard=True,
             config=vars(args),
             name=run_name,
@@ -167,7 +169,7 @@ if __name__ == "__main__":
 
     # env setup
     envs = gym.vector.SyncVectorEnv(
-        [make_env(args.env_id, i, args.capture_video, run_name, args.gamma,writer,args.seed) for i in range(args.num_envs)]
+        [make_env(args.env_id, i, args.capture_video, run_name, args.gamma,writer,args.seed,args.current_ratio) for i in range(args.num_envs)]
     )
     assert isinstance(envs.single_action_space, gym.spaces.Box), "only continuous action space is supported"
 

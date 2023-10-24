@@ -80,6 +80,8 @@ def parse_args():
                         help="noise clip parameter of the Target Policy Smoothing Regularization")
     parser.add_argument("--alpha", type=float, default=0.2,
                         help="Entropy regularization coefficient.")
+    parser.add_argument("--current_ratio", type=float, default=0.1,
+                        help="Entropy regularization coefficient.")
     parser.add_argument("--alpha_coefficient", type=float, default=0.9998,
                         help="Entropy regularization coefficient.")
     parser.add_argument("--autotune", type=lambda x: bool(strtobool(x)), default=False, nargs="?", const=True,
@@ -91,10 +93,10 @@ def parse_args():
     return args
 
 
-def make_env(env_id, seed, idx, capture_video, run_name, writer):
+def make_env(env_id, seed, idx, capture_video, run_name, writer,current_ratio):
     def thunk():
         # env = gym.make(env_id)
-        env = Env_aricraft(writer, "asac", seed=seed)
+        env = Env_aricraft(writer, "asac", current_ratio=current_ratio,seed=seed)
         env = gym.wrappers.RecordEpisodeStatistics(env)
         if capture_video:
             if idx == 0:
@@ -175,14 +177,14 @@ class Actor(nn.Module):
 
 if __name__ == "__main__":
     args = parse_args()
-    run_name = f"{args.exp_name}__{args.seed}__{int(time.time())}"
+    run_name = f"{args.exp_name}__{args.seed}__current_ratio{args.current_ratio}_{int(time.time())}"
     if args.track:
         import wandb
 
         wandb.init(
             project=args.wandb_project_name,
             entity=args.wandb_entity,
-            group=f"{args.exp_name}",
+            group=f"{args.exp_name}_current_ratio{args.current_ratio}",
             sync_tensorboard=True,
             config=vars(args),
             name=run_name,
@@ -198,7 +200,7 @@ if __name__ == "__main__":
     device = torch.device("cuda:1" if torch.cuda.is_available() and args.cuda else "cpu")
 
     # env setup 先生成环境，再设置随机数！！！！！！！！
-    envs = gym.vector.SyncVectorEnv([make_env(args.env_id, args.seed, 0, args.capture_video, run_name, writer)])
+    envs = gym.vector.SyncVectorEnv([make_env(args.env_id, args.seed, 0, args.capture_video, run_name, writer,args.current_ratio)])
     assert isinstance(envs.single_action_space, gym.spaces.Box), "only continuous action space is supported"
 
     # TRY NOT TO MODIFY: seeding

@@ -50,7 +50,7 @@ START_POINT = np.array([1., 1., 6.])
 GOAL_POINT = np.array([49., 49., 6.])
 MIN = 0.0
 MAX = 49.0
-CURRENT_RATIO = 0.1
+
 ########Obs##########
 obs1 = [40.0, 12.0, 35.0];
 obs2 = [6.0, 35.0, 46.0];
@@ -402,11 +402,11 @@ with open(f"{grid_x}*{grid_y}_{number}.pkl", "rb") as fo:
 
 
 class Env_aricraft(gym.Env):
-    def __init__(self, writer, algorithm_name,seed, max_step=1000, static_obs=3):
+    def __init__(self, writer, algorithm_name,seed,current_ratio, max_step=1000, static_obs=3):
         # self.state_space = Box(low=-49.0, high=49.0, shape=(6,))
         # self.action_space = Discrete(6)
         self.algorithm_name = algorithm_name
-        self.fig_dir = f"{algorithm_name}_fig"
+        self.fig_dir = f"{algorithm_name}_fig_ratio_{current_ratio}"
         os.makedirs(f"./{self.fig_dir}/{run_time}")
         self.writer = writer
         self.max_step = max_step
@@ -414,7 +414,7 @@ class Env_aricraft(gym.Env):
         self.observation_space = Box(low=-50.0, high=50.0, shape=(26+2,),seed=seed)
         self.action_space = Box(np.array([0.0, 0.0]), np.array([np.pi, 2*np.pi]),seed=seed)
         self.GOAL_POINT = GOAL_POINT
-        self.GOAL_POINT[1],self.GOAL_POINT[2]= 1+48*np.random.rand() , 1+48*np.random.rand()
+        # self.GOAL_POINT[1],self.GOAL_POINT[2]= 1+48*np.random.rand() , 1+48*np.random.rand()
         # 设定numpy随机数
         # np.random.seed(seed)  # 这样以来下面的地图就是固定的了吧
         # torch.manual_seed(seed)
@@ -434,7 +434,7 @@ class Env_aricraft(gym.Env):
         self.load_current()  # todo
         self.current_fre = 10  # todo
         self.current_path = current_path
-        self.current_ratio = CURRENT_RATIO  # todo
+        self.current_ratio = current_ratio # todo
 
         self.last_distance = np.sqrt(np.sum((self.current_point - self.GOAL_POINT) ** 2))
         ######OBS########
@@ -484,7 +484,7 @@ class Env_aricraft(gym.Env):
         #     with open(os.path.join(record_dir, 'obs_position.csv'), 'a') as f:
         #         writer = csv.writer(f)
         #         writer.writerow(obs)
-        self.GOAL_POINT[1],self.GOAL_POINT[2]= 1+48*np.random.rand() , 1+48*np.random.rand()
+        # self.GOAL_POINT[1],self.GOAL_POINT[2]= 1+48*np.random.rand() , 1+48*np.random.rand()
         self.writer.add_scalar("info/self.GOAL_POINT[1]", self.GOAL_POINT[1], self.episode)
         self.writer.add_scalar("info/self.GOAL_POINT[2]", self.GOAL_POINT[2], self.episode)
 
@@ -549,9 +549,9 @@ class Env_aricraft(gym.Env):
         self.writer.add_scalar('maybe_ploted/velocity', velocity, self.total_step)
         # action = self.is_action_valid(action)
         position, current_ratio = self.caculate_position(action, velocity)
-        if position[0] > 49 or position[1] > 49 or position[2] > 49:
-            pause = 1
-            position, current_ratio = self.caculate_position(action)
+        # if position[0] > 49 or position[1] > 49 or position[2] > 49:
+        #     pause = 1
+        #     position, current_ratio = self.caculate_position(action)
         self.last_point = self.current_point
         self.current_point = position
         self.history_x.append(self.current_point[0])
@@ -587,8 +587,12 @@ class Env_aricraft(gym.Env):
         return action
 
     def caculate_position(self, action,velocity):
-        current = self.caculate_current()
-        current_ratio = current / self.max_current * self.current_ratio
+        # current = self.caculate_current()
+        # current_ratio = current / self.max_current * self.current_ratio
+        current = [1,-1.0,0.0]
+        current_random = np.random.normal(size=[3])*0.1
+        current_ratio = (current+current_random) * self.current_ratio
+
         position = np.zeros(3, )
         # for i in range(3):
         #     position[i] = self.current_point[i]
