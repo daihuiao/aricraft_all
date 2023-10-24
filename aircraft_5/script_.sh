@@ -2,7 +2,7 @@ projectname="aircraft_exp5_"
 current_ratio=
 
 if [ $1 = "asac" ];then
-  for current_ratio in 0.01 0.05
+  for current_ratio in  0.1 0.2 0.4
   do
       for seed in  21 22 23 24 25
       do
@@ -11,7 +11,7 @@ if [ $1 = "asac" ];then
   done
 
 elif [ $1 = "sac" ]; then
-  for current_ratio in 0.01 0.05
+  for current_ratio in  0.1 0.2 0.4
   do
     for seed in  21 22 23 24 25
     do
@@ -19,7 +19,7 @@ elif [ $1 = "sac" ]; then
     done
   done
 elif [ $1 = "ppo" ]; then
-  for current_ratio in 0.01 0.05
+  for current_ratio in  0.1 0.2 0.4
   do
     for seed in  21 22 23 24 25
     do
@@ -27,7 +27,7 @@ elif [ $1 = "ppo" ]; then
     done
   done
 elif [ $1 = "td3" ]; then
-  for current_ratio in 0.01 0.05
+  for current_ratio in  0.1 0.2 0.4
   do
     for seed in  21 22 23 24 25
     do

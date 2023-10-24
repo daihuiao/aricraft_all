@@ -589,7 +589,7 @@ class Env_aricraft(gym.Env):
     def caculate_position(self, action,velocity):
         # current = self.caculate_current()
         # current_ratio = current / self.max_current * self.current_ratio
-        current = [1,-1.0,0.0]
+        current = [1/np.sqrt(2),-1.0/np.sqrt(2),0.0]
         current_random = np.random.normal(size=[3])*0.1
         current_ratio = (current+current_random) * self.current_ratio
 
