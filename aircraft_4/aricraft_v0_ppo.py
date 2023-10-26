@@ -436,7 +436,7 @@ class Env_aricraft(gym.Env):
         # self.action_space = Discrete(6)
         self.number_of_obstacle = number_of_obstacle
         self.algorithm_name = algorithm_name
-        self.fig_dir = f"{algorithm_name}_fig"
+        self.fig_dir = f"{algorithm_name}_fig_obstacleNum{number_of_obstacle}"
         os.makedirs(f"./{self.fig_dir}/{run_time}")
         self.writer = writer
         self.max_step = max_step
