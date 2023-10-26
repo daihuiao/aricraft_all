@@ -19,7 +19,7 @@ from gen_cube import  Cube_generator, One_cube
 
 from aircraft_v1_sac import Env_aricraft
 
-os.environ["WANDB_API_KEY"] = "b4fdd4e5e894cba0eda9610de6f9f04b87a86453"
+os.environ["WANDB_API_KEY"] = "ae0e6caaf057f39cdb202021c8e6216e6257369e"
 
 # from dataclasses import asdict, dataclass
 # @dataclass # 和argparse一样，比他简洁
@@ -85,15 +85,17 @@ def parse_args():
         help="automatic tuning of the entropy coefficient")
     parser.add_argument("--exponent_decay", type=lambda x:bool(strtobool(x)), default=False, nargs="?", const=True,
         help="bulabula")
+    parser.add_argument("--number_of_obstacle", type=int, default=3,
+                        help="Entropy regularization coefficient.")
     args = parser.parse_args()
     # fmt: on
     return args
 
 
-def make_env(env_id, seed, idx, capture_video, run_name,writer):
+def make_env(env_id, seed, idx, capture_video, run_name,writer,number_of_obstacle):
     def thunk():
         # env = gym.make(env_id)
-        env = Env_aricraft(writer,"sac",seed=seed)
+        env = Env_aricraft(writer,"sac",number_of_obstacle=number_of_obstacle,seed=seed)
         env = gym.wrappers.RecordEpisodeStatistics(env)
         if capture_video:
             if idx == 0:
@@ -199,7 +201,7 @@ if __name__ == "__main__":
     torch.backends.cudnn.benchmark = False
 
     # env setup 先生成环境，再设置随机数！！！！！！！！
-    envs = gym.vector.SyncVectorEnv([make_env(args.env_id, args.seed, 0, args.capture_video, run_name,writer)])
+    envs = gym.vector.SyncVectorEnv([make_env(args.env_id, args.seed, 0, args.capture_video, run_name,writer,args.number_of_obstacle)])
     assert isinstance(envs.single_action_space, gym.spaces.Box), "only continuous action space is supported"
 
 

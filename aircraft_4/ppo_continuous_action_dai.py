@@ -17,7 +17,7 @@ from gen_cube import  Cube_generator, One_cube
 
 from aricraft_v0_ppo import Env_aricraft
 
-os.environ["WANDB_API_KEY"] = "b4fdd4e5e894cba0eda9610de6f9f04b87a86453"
+os.environ["WANDB_API_KEY"] = "ae0e6caaf057f39cdb202021c8e6216e6257369e"
 
 def parse_args():
     # fmt: off
@@ -74,6 +74,9 @@ def parse_args():
                         help="the maximum norm for the gradient clipping")
     parser.add_argument("--target-kl", type=float, default=None,
                         help="the target KL divergence threshold")
+    parser.add_argument("--number_of_obstacle", type=int, default=3,
+                        help="Entropy regularization coefficient.")
+
     args = parser.parse_args()
     args.batch_size = int(args.num_envs * args.num_steps)
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
@@ -81,12 +84,12 @@ def parse_args():
     return args
 
 
-def make_env(env_id, idx, capture_video, run_name, gamma, writer,seed):
+def make_env(env_id, idx, capture_video, run_name, gamma, writer,seed,number_of_obstacle):
     def thunk():
         if capture_video:
             env = gym.make(env_id, render_mode="rgb_array")
         else:
-            env = Env_aricraft(writer,"ppo",seed=seed)
+            env = Env_aricraft(writer,"ppo",number_of_obstacle=number_of_obstacle,seed=seed)
             # env = gym.make(env_id)
         env = gym.wrappers.FlattenObservation(env)  # deal with dm_control's Dict observation space
         env = gym.wrappers.RecordEpisodeStatistics(env)
@@ -167,7 +170,7 @@ if __name__ == "__main__":
 
     # env setup
     envs = gym.vector.SyncVectorEnv(
-        [make_env(args.env_id, i, args.capture_video, run_name, args.gamma,writer,args.seed) for i in range(args.num_envs)]
+        [make_env(args.env_id, i, args.capture_video, run_name, args.gamma,writer,args.seed,args.number_of_obstacle) for i in range(args.num_envs)]
     )
     assert isinstance(envs.single_action_space, gym.spaces.Box), "only continuous action space is supported"
 

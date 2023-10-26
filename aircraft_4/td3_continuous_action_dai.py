@@ -16,7 +16,7 @@ from torch.utils.tensorboard import SummaryWriter
 from gen_cube import  Cube_generator, One_cube
 from aircraft_v1_sac import Env_aricraft
 
-os.environ["WANDB_API_KEY"] = "b4fdd4e5e894cba0eda9610de6f9f04b87a86453"
+os.environ["WANDB_API_KEY"] = "ae0e6caaf057f39cdb202021c8e6216e6257369e"
 
 def parse_args():
     # fmt: off
@@ -63,15 +63,18 @@ def parse_args():
                         help="the frequency of training policy (delayed)")
     parser.add_argument("--noise-clip", type=float, default=0.5,
                         help="noise clip parameter of the Target Policy Smoothing Regularization")
+    parser.add_argument("--number_of_obstacle", type=int, default=3,
+                        help="Entropy regularization coefficient.")
+
     args = parser.parse_args()
     # fmt: on
     return args
 
 
-def make_env(env_id, seed, idx, capture_video, run_name,writer):
+def make_env(env_id, seed, idx, capture_video, run_name,writer,number_of_obstacle):
     def thunk():
         # env = gym.make(env_id)
-        env = Env_aricraft(writer,"td3",seed=seed)
+        env = Env_aricraft(writer,"td3",number_of_obstacle=number_of_obstacle,seed=seed)
         env = gym.wrappers.RecordEpisodeStatistics(env)
         if capture_video:
             if idx == 0:
@@ -147,7 +150,7 @@ if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() and args.cuda else "cpu")
 
     # env setup
-    envs = gym.vector.SyncVectorEnv([make_env(args.env_id, args.seed, 0, args.capture_video, run_name, writer)])
+    envs = gym.vector.SyncVectorEnv([make_env(args.env_id, args.seed, 0, args.capture_video, run_name, writer,args.number_of_obstacle)])
     assert isinstance(envs.single_action_space, gym.spaces.Box), "only continuous action space is supported"
 
     # TRY NOT TO MODIFY: seeding

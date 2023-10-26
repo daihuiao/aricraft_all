@@ -1,6 +1,7 @@
 import copy
 import math
 import pickle
+import random
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,12 +18,12 @@ import wandb
 import scipy.io as sc
 from mpl_toolkits.mplot3d import Axes3D
 from datetime import datetime
-from gen_cube import  Cube_generator, One_cube
-
+from gen_cube import Cube_generator, One_cube
 
 # import matplotlib.pyplot as plt
 # plt.switch_backend('agg')
 from gen_cube import One_cube
+
 #######train路径图#######
 figure_dir = r'./figure'
 if not os.path.exists(figure_dir):
@@ -140,7 +141,6 @@ class Dynnmic_obs():
 #     plot_cuboid(center, (length, width, height))
 #
 # mPrint()
-
 
 
 # class One_cube():
@@ -401,20 +401,50 @@ with open(f"{grid_x}*{grid_y}_{number}.pkl", "rb") as fo:
         hahas.append(haha)
 
 
+class obstacle_for_cube():
+    def __init__(self, number_of_obstacle, radius=0.2):
+        obstacle_list = []
+        numbers = list(range(1, (grid_x + 1) * (grid_y + 1) + 1))  # 创建包含1到16之间所有数的列表
+        random_numbers = random.sample(numbers, number_of_obstacle)  # 从列表中随机选择两个数
+        random_index = 0
+        while (len(obstacle_list) < number_of_obstacle):
+            x = (random_numbers[random_index] - 1) % 4
+            y = (random_numbers[random_index] - 1) // 4
+            z = 3 * random.random()  # todo problems
+            obstacle_list.append([x, y, z])
+            random_index += 1
+        self.obstacle_list = np.array(obstacle_list)
+        self.radius = radius
+
+    def check_collision(self, x, y, z):
+        distance = np.linalg.norm(self.obstacle_list - np.array([x, y, z]), axis=1)
+        for i in distance:
+            if i < self.radius:
+                return True
+        return False
+
+    def get_obstacle(self, x, y, z):
+        distance = np.linalg.norm(self.obstacle_list - np.array([x, y, z]), axis=1)
+        nearest_obstacle_index = np.argmin(distance)
+        # print(nearest_obstacle_index)
+        return self.obstacle_list[nearest_obstacle_index]
+
+
 class Env_aricraft(gym.Env):
-    def __init__(self, writer, algorithm_name,seed, max_step=1000, static_obs=3):
+    def __init__(self, writer, algorithm_name, seed, number_of_obstacle, max_step=1000, static_obs=3):
         # self.state_space = Box(low=-49.0, high=49.0, shape=(6,))
         # self.action_space = Discrete(6)
+        self.number_of_obstacle = number_of_obstacle
         self.algorithm_name = algorithm_name
         self.fig_dir = f"{algorithm_name}_fig"
         os.makedirs(f"./{self.fig_dir}/{run_time}")
         self.writer = writer
         self.max_step = max_step
         # self.state_space = Box(low=-49.0, high=49.0, shape=(26+2,),seed=seed)
-        self.observation_space = Box(low=-50.0, high=50.0, shape=(26+2,),seed=seed)
-        self.action_space = Box(np.array([0.0, 0.0]), np.array([np.pi, 2*np.pi]),seed=seed)
+        self.observation_space = Box(low=-50.0, high=50.0, shape=(26 + 2 + 3,), seed=seed)
+        self.action_space = Box(np.array([0.0, 0.0]), np.array([np.pi, 2 * np.pi]), seed=seed)
         self.GOAL_POINT = GOAL_POINT
-        self.GOAL_POINT[1],self.GOAL_POINT[2]= 1+48*np.random.rand() , 1+48*np.random.rand()
+        # self.GOAL_POINT[1],self.GOAL_POINT[2]= 1+48*np.random.rand() , 1+48*np.random.rand()
         # 设定numpy随机数
         # np.random.seed(seed)  # 这样以来下面的地图就是固定的了吧
         # torch.manual_seed(seed)
@@ -484,9 +514,10 @@ class Env_aricraft(gym.Env):
         #     with open(os.path.join(record_dir, 'obs_position.csv'), 'a') as f:
         #         writer = csv.writer(f)
         #         writer.writerow(obs)
-        self.GOAL_POINT[1],self.GOAL_POINT[2]= 1+48*np.random.rand() , 1+48*np.random.rand()
+        # self.GOAL_POINT[1],self.GOAL_POINT[2]= 1+48*np.random.rand() , 1+48*np.random.rand()
         self.writer.add_scalar("info/self.GOAL_POINT[1]", self.GOAL_POINT[1], self.episode)
         self.writer.add_scalar("info/self.GOAL_POINT[2]", self.GOAL_POINT[2], self.episode)
+        self.obstacle_dai = obstacle_for_cube(self.number_of_obstacle, 0.2)
 
         Obs = [obs1, obs2, obs3, obs4, obs5, obs6, obs7, obs8, obs9, obs10, obs11, obs12, obs13, obs14, obs15, obs16]
         if self.static_obs == 0:
@@ -523,10 +554,13 @@ class Env_aricraft(gym.Env):
         # state = np.concatenate((self.goal - self.current_point, mask), axis=0)
         x = self.current_point[0] / 50 * grid_x
         y = self.current_point[1] / 50 * grid_y
+        z = self.current_point[2] / 50 * grid_y
 
         four_cube = self.cube_generator.get_obs_of_aircraft(x=x, y=y)
         four_cube = four_cube / grid_x * 50
-        state = np.concatenate((self.current_point, mask, four_cube,self.GOAL_POINT[1:3]), axis=0)
+
+        nearest_obstacle = self.obstacle_dai.get_obstacle(x, y, z) / grid_x * 50
+        state = np.concatenate((self.current_point, mask, four_cube, self.GOAL_POINT[1:3], nearest_obstacle), axis=0)
         self.history_x = []
         self.history_y = []
         self.history_z = []
@@ -561,9 +595,12 @@ class Env_aricraft(gym.Env):
         # state = np.concatenate((self.goal - self.current_point, current), axis=0)
         x = self.current_point[0] / 50 * grid_x
         y = self.current_point[1] / 50 * grid_y
+        z = self.current_point[2] / 50 * 3
         four_cube = self.cube_generator.get_obs_of_aircraft(x=x, y=y)
         four_cube = four_cube / grid_x * 50
-        state = np.concatenate((self.current_point, current, four_cube,self.GOAL_POINT[1:3]), axis=0)  # todo right？
+        nearest_obstacle = self.obstacle_dai.get_obstacle(x, y, z) / grid_x * 50
+        state = np.concatenate((self.current_point, current, four_cube, self.GOAL_POINT[1:3], nearest_obstacle),
+                               axis=0)  # todo right？
 
         # assert self.state_space.contains(state), "%r (%s) invalid" % (state, type(state))
 
@@ -586,7 +623,7 @@ class Env_aricraft(gym.Env):
         assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
         return action
 
-    def caculate_position(self, action,velocity):
+    def caculate_position(self, action, velocity):
         current = self.caculate_current()
         current_ratio = current / self.max_current * self.current_ratio
         position = np.zeros(3, )
@@ -661,8 +698,9 @@ class Env_aricraft(gym.Env):
             # print(self.step_counter, distance_reward, current_reward)
             x = self.current_point[0] / 50 * grid_x
             y = self.current_point[1] / 50 * grid_y
-            z = self.current_point[2] / 50 * grid_z
-            if self.cube_generator.check_collision(x, y, z):
+            cube_collision = self.cube_generator.check_collision(x, y, self.current_point[2] / 50 * grid_z)
+            obstacle_collision = self.obstacle_dai.check_collision(x, y, self.current_point[2] / 50 * 3)
+            if cube_collision or obstacle_collision:
                 self.collision_time += 1
                 cube_reward = -5
             else:
@@ -718,7 +756,6 @@ class Env_aricraft(gym.Env):
             self.episode_rewards_1_s.append(self.episode_reward_1)
             self.visualization()
 
-
             print("self.collision_time:", self.collision_time)
             self.writer.add_scalar("to_be_ploted/self.episode", self.episode, self.episode)
             self.writer.add_scalar("to_be_ploted/collision_time", self.collision_time, self.episode)
@@ -738,8 +775,8 @@ class Env_aricraft(gym.Env):
             self.episode_trajuctory_length = 0
             self.collision_time = 0
 
-            with open(f"trajectory_{self.algorithm_name}.pkl","a+b") as fo:
-                pickle.dump([self.history_x,self.history_y,self.history_z],fo)
+            with open(f"trajectory_{self.algorithm_name}.pkl", "a+b") as fo:
+                pickle.dump([self.history_x, self.history_y, self.history_z], fo)
 
             return True
         else:
