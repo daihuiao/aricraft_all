@@ -1,7 +1,7 @@
 projectname="aircraft_exp4_"
 
 if [ $1 = "asac" ];then
-  for obstacleNum in 13 15
+  for obstacleNum in 5 7
   do
     for seed in  21 22 23 24 25
     do
@@ -9,7 +9,7 @@ if [ $1 = "asac" ];then
     done
   done
 elif [ $1 = "sac" ]; then
-  for obstacleNum in 13 15
+  for obstacleNum in 5 7
   do
     for seed in  21 22 23 24 25
     do
@@ -17,7 +17,7 @@ elif [ $1 = "sac" ]; then
     done
   done
 elif [ $1 = "ppo" ]; then
-  for obstacleNum in 13 15
+  for obstacleNum in 5 7
   do
     for seed in  21 22 23 24 25
     do
@@ -25,7 +25,7 @@ elif [ $1 = "ppo" ]; then
     done
   done
 elif [ $1 = "td3" ]; then
-  for obstacleNum in 13 15
+  for obstacleNum in 5 7
   do
     for seed in  21 22 23 24 25
     do
